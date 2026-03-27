@@ -89,6 +89,7 @@ parts:
   - file: reference/cheatsheet
   - file: reference/cli
   - file: reference/glossary
+  - file: reference/sandbox-mainnet
 
 - caption: About Jupyter Book
   chapters:
