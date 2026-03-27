@@ -483,6 +483,46 @@ def sphinx(ctx, path_source, config, toc):
     click.secho(f"Wrote conf.py to {out_folder}", fg="green")
 
 
+@main.command("ants-exchange")
+@click.option(
+    "-m",
+    "--message",
+    "messages",
+    multiple=True,
+    help="One or more free-text messages to map to ANT cards.",
+)
+@click.option(
+    "--interactive",
+    is_flag=True,
+    help="Start a terminal loop for real-time message-to-card exchange.",
+)
+def ants_exchange(messages, interactive):
+    """Run ANT card matching for human-to-system exchanges."""
+    from jupyter_book.ants import build_exchange_response, render_exchange
+
+    if not messages and not interactive:
+        _error("Provide at least one --message, or use --interactive.")
+
+    for message in messages:
+        click.echo(f"> {message}")
+        response = build_exchange_response(message)
+        click.echo(render_exchange(response))
+        click.echo("")
+
+    if not interactive:
+        return
+
+    click.echo("Interactive ANT exchange. Press Enter on an empty line to exit.")
+    while True:
+        prompt = click.prompt("message", default="", show_default=False)
+        if not prompt.strip():
+            click.echo("Goodbye.")
+            break
+        response = build_exchange_response(prompt)
+        click.echo(render_exchange(response))
+        click.echo("")
+
+
 # utility functions
 
 
