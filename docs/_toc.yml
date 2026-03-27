@@ -41,6 +41,7 @@ parts:
     - file: content/proof
     - file: content/figures
     - file: content/metadata
+    - file: content/flow-transmission
 
   - file: content/executable/index
     sections:
