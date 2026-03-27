@@ -11,6 +11,7 @@ from jupyter_book.ants import (
     run_realtime_exchange,
     select_card,
 )
+from jupyter_book.ants import ANT_CARDS, card_by_code, match_cards, render_card, render_cards
 
 
 def test_card_by_code_case_insensitive():
