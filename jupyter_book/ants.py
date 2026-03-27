@@ -29,6 +29,15 @@ class AntCard:
     triggers: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class ExchangeResponse:
+    """Normalized response generated from one user message."""
+
+    text: str
+    selected: AntCard | None
+    matches: tuple[AntCard, ...]
+
+
 ANT_CARDS: tuple[AntCard, ...] = (
     AntCard(
         code="ANT-01",
@@ -180,6 +189,64 @@ def match_cards(text: str, *, limit: int | None = None) -> list[AntCard]:
             if limit is not None and len(matches) >= limit:
                 break
     return matches
+
+
+def _keyword_hits(text: str, keywords: tuple[str, ...]) -> int:
+    """Return the number of trigger substrings found in ``text``."""
+
+    haystack = text.lower()
+    return sum(1 for keyword in keywords if keyword in haystack)
+
+
+def select_card(text: str) -> AntCard | None:
+    """Pick the best card for ``text`` using trigger hit counts.
+
+    If there is a tie, the card that appears first in ``ANT_CARDS`` wins.
+    """
+
+    best: tuple[int, AntCard] | None = None
+    for card in ANT_CARDS:
+        score = _keyword_hits(text, card.triggers)
+        if score <= 0:
+            continue
+        if best is None or score > best[0]:
+            best = (score, card)
+    return None if best is None else best[1]
+
+
+def build_exchange_response(text: str, *, limit: int = 3) -> ExchangeResponse:
+    """Build an exchange response from free text for real-time usage."""
+
+    matches = tuple(match_cards(text, limit=limit))
+    selected = select_card(text)
+    return ExchangeResponse(text=text, selected=selected, matches=matches)
+
+
+def render_exchange(response: ExchangeResponse) -> str:
+    """Render an exchange response to plain text."""
+
+    if response.selected is None:
+        return (
+            "No ANT trigger detected.\n"
+            "Try including a clear keyword or phrase from one of the ANT cards."
+        )
+
+    lines = [f"Selected: {response.selected.code} — {response.selected.title}"]
+    lines.append(f"A: {response.selected.affirmation}")
+    lines.append("N:")
+    lines.extend(
+        f"  {idx}. {step}" for idx, step in enumerate(response.selected.next_steps, start=1)
+    )
+    if response.matches:
+        related = ", ".join(card.code for card in response.matches)
+        lines.append(f"Related matches: {related}")
+    return "\n".join(lines)
+
+
+def run_realtime_exchange(messages: Iterable[str]) -> list[ExchangeResponse]:
+    """Run card selection over a stream of messages."""
+
+    return [build_exchange_response(message) for message in messages]
 
 
 def render_card(card: AntCard) -> str:

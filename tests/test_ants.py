@@ -1,5 +1,16 @@
 import pytest
 
+from jupyter_book.ants import (
+    ANT_CARDS,
+    build_exchange_response,
+    card_by_code,
+    match_cards,
+    render_card,
+    render_cards,
+    render_exchange,
+    run_realtime_exchange,
+    select_card,
+)
 from jupyter_book.ants import ANT_CARDS, card_by_code, match_cards, render_card, render_cards
 
 
@@ -35,3 +46,41 @@ def test_render_card_format():
 def test_render_cards_separates_with_blank_lines():
     rendered = render_cards(ANT_CARDS[:2])
     assert "\n\nANT-02" in rendered
+
+
+def test_select_card_prefers_highest_keyword_hit_count():
+    text = "I feel no more doubt and false perceptions are dissolving."
+    card = select_card(text)
+    assert card is not None
+    assert card.code == "ANT-01"
+
+
+def test_build_exchange_response_and_render_exchange():
+    response = build_exchange_response(
+        "I need shielded presence and a clear ask for this environment."
+    )
+    assert response.selected is not None
+    assert response.selected.code == "ANT-06"
+    rendered = render_exchange(response)
+    assert "Selected: ANT-06 — Reality Alignment" in rendered
+    assert "Related matches: ANT-06" in rendered
+
+
+def test_render_exchange_no_match():
+    response = build_exchange_response("This sentence does not contain any known trigger.")
+    assert response.selected is None
+    assert "No ANT trigger detected." in render_exchange(response)
+
+
+def test_run_realtime_exchange():
+    messages = [
+        "instant download",
+        "speech shapes reality",
+        "unrelated phrase",
+    ]
+    responses = run_realtime_exchange(messages)
+    assert [item.selected.code if item.selected else None for item in responses] == [
+        "ANT-07",
+        "ANT-08",
+        None,
+    ]

@@ -39,7 +39,7 @@ class PluggableGroup(click.Group):
 
         return subcommands
 
-    def get_command(self, ctx: click.Context, name: str) -> click.BaseCommand:
+    def get_command(self, ctx: click.Context, name: str) -> click.Command:
         """Try to load a subcommand from entry points, else defer to super."""
         command = None
         if self.exclude_external_plugins or name in self._use_internal:
